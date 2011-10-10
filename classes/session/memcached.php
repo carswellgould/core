@@ -64,7 +64,7 @@ class Session_Memcached extends \Session_Driver {
 			// do we have the PHP memcached extension available
 			if ( ! class_exists('Memcached') )
 			{
-				throw new \Fuel_Exception('Memcached sessions are configured, but your PHP installation doesn\'t have the Memcached extension loaded.');
+				throw new \FuelException('Memcached sessions are configured, but your PHP installation doesn\'t have the Memcached extension loaded.');
 			}
 
 			// instantiate the memcached object
@@ -76,7 +76,7 @@ class Session_Memcached extends \Session_Driver {
 			// check if we can connect to the server(s)
 			if ($this->memcached->getVersion() === false)
 			{
-				throw new \Fuel_Exception('Memcached sessions are configured, but there is no connection possible. Check your configuration.');
+				throw new \FuelException('Memcached sessions are configured, but there is no connection possible. Check your configuration.');
 			}
 		}
 	}
@@ -87,7 +87,7 @@ class Session_Memcached extends \Session_Driver {
 	 * create a new session
 	 *
 	 * @access	public
-	 * @return	void
+	 * @return	Fuel\Core\Session_Memcached
 	 */
 	public function create()
 	{
@@ -104,6 +104,8 @@ class Session_Memcached extends \Session_Driver {
 
 		// and set the session cookie
 		$this->_set_cookie();
+
+		return $this;
 	}
 
 	// --------------------------------------------------------------------
@@ -113,7 +115,7 @@ class Session_Memcached extends \Session_Driver {
 	 *
 	 * @access	public
 	 * @param	boolean, set to true if we want to force a new session to be created
-	 * @return	void
+	 * @return	Fuel\Core\Session_Driver
 	 */
 	public function read($force = false)
 	{
@@ -169,7 +171,7 @@ class Session_Memcached extends \Session_Driver {
 		if (isset($payload[0])) $this->data = $payload[0];
 		if (isset($payload[1])) $this->flash = $payload[1];
 
-		parent::read();
+		return parent::read();
 	}
 
 	// --------------------------------------------------------------------
@@ -178,7 +180,7 @@ class Session_Memcached extends \Session_Driver {
 	 * write the session
 	 *
 	 * @access	public
-	 * @return	void
+	 * @return	Fuel\Core\Session_Memcached
 	 */
 	public function write()
 	{
@@ -197,7 +199,7 @@ class Session_Memcached extends \Session_Driver {
 			$this->_write_memcached($this->keys['session_id'], $payload);
 
 			// was the session id rotated?
-			if ( isset($this->keys['previous_id']) && $this->keys['previous_id'] != $this->keys['session_id'])
+			if ( isset($this->keys['previous_id']) and $this->keys['previous_id'] != $this->keys['session_id'])
 			{
 				// point the old session file to the new one, we don't want to lose the session
 				$payload = $this->_serialize(array('rotated_session_id' => $this->keys['session_id']));
@@ -206,6 +208,8 @@ class Session_Memcached extends \Session_Driver {
 
 			$this->_set_cookie();
 		}
+
+		return $this;
 	}
 
 	// --------------------------------------------------------------------
@@ -214,7 +218,7 @@ class Session_Memcached extends \Session_Driver {
 	 * destroy the current session
 	 *
 	 * @access	public
-	 * @return	void
+	 * @return	Fuel\Core\Session_Memcached
 	 */
 	public function destroy()
 	{
@@ -224,12 +228,14 @@ class Session_Memcached extends \Session_Driver {
 			// delete the key from the memcached server
 			if ($this->memcached->delete($this->config['cookie_name'].'_'.$this->keys['session_id']) === false)
 			{
-				throw new \Fuel_Exception('Memcached returned error code "'.$this->memcached->getResultCode().'" on delete. Check your configuration.');
+				throw new \FuelException('Memcached returned error code "'.$this->memcached->getResultCode().'" on delete. Check your configuration.');
 			}
 		}
 
 		// reset the stored session data
 		$this->keys = $this->flash = $this->data = array();
+
+		return $this;
 	}
 
 	// --------------------------------------------------------------------
@@ -248,7 +254,7 @@ class Session_Memcached extends \Session_Driver {
 		// write it to the memcached server
 		if ($this->memcached->set($this->config['cookie_name'].'_'.$this->keys['session_id'], $payload, $this->config['expiration_time']) === false)
 		{
-			throw new \Fuel_Exception('Memcached returned error code "'.$this->memcached->getResultCode().'" on write. Check your configuration.');
+			throw new \FuelException('Memcached returned error code "'.$this->memcached->getResultCode().'" on write. Check your configuration.');
 		}
 	}
 
@@ -288,7 +294,7 @@ class Session_Memcached extends \Session_Driver {
 					switch ($name)
 					{
 						case 'cookie_name':
-							if ( empty($value) OR ! is_string($value))
+							if ( empty($value) or ! is_string($value))
 							{
 								$value = 'fuelmid';
 							}
@@ -296,7 +302,7 @@ class Session_Memcached extends \Session_Driver {
 
 						case 'servers':
 							// do we have a servers config
-							if ( empty($value) OR ! is_array($value))
+							if ( empty($value) or ! is_array($value))
 							{
 								$value = array('default' => array('host' => '127.0.0.1', 'port' => '11211'));
 							}
@@ -305,17 +311,17 @@ class Session_Memcached extends \Session_Driver {
 							foreach ($value as $key => $server)
 							{
 								// do we have a host?
-								if ( ! isset($server['host']) OR ! is_string($server['host']))
+								if ( ! isset($server['host']) or ! is_string($server['host']))
 								{
-									throw new \Fuel_Exception('Invalid Memcached server definition in the session configuration.');
+									throw new \FuelException('Invalid Memcached server definition in the session configuration.');
 								}
 								// do we have a port number?
-								if ( ! isset($server['port']) OR ! is_numeric($server['port']) OR $server['port'] < 1025 OR $server['port'] > 65535)
+								if ( ! isset($server['port']) or ! is_numeric($server['port']) or $server['port'] < 1025 or $server['port'] > 65535)
 								{
-									throw new \Fuel_Exception('Invalid Memcached server definition in the session configuration.');
+									throw new \FuelException('Invalid Memcached server definition in the session configuration.');
 								}
 								// do we have a relative server weight?
-								if ( ! isset($server['weight']) OR ! is_numeric($server['weight']) OR $server['weight'] < 0)
+								if ( ! isset($server['weight']) or ! is_numeric($server['weight']) or $server['weight'] < 0)
 								{
 									// set a default
 									$value[$key]['weight'] = 0;
@@ -351,4 +357,4 @@ class Session_Memcached extends \Session_Driver {
 
 }
 
-/* End of file memcached.php */
+

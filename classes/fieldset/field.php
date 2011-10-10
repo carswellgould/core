@@ -14,78 +14,74 @@ namespace Fuel\Core;
 
 
 
-// ------------------------------------------------------------------------
-
 /**
  * Fieldset Class
  *
  * Define a set of fields that can be used to generate a form or to validate input.
  *
- * @package		Fuel
- * @category	Core
- * @author		Jelmer Schreuder
+ * @package   Fuel
+ * @category  Core
  */
 class Fieldset_Field
 {
 	/**
-	 * @var	Fieldset	Fieldset this field belongs to
+	 * @var  Fieldset  Fieldset this field belongs to
 	 */
 	protected $fieldset;
 
 	/**
-	 * @var	string	Name of this field
+	 * @var  string  Name of this field
 	 */
 	protected $name = '';
 
 	/**
-	 * @var	string	Field type for form generation
+	 * @var  string  Field type for form generation
 	 */
 	protected $type = 'text';
 
 	/**
-	 * @var	string	Field label for validation errors and form label generation
+	 * @var  string  Field label for validation errors and form label generation
 	 */
 	protected $label = '';
 
 	/**
-	 * @var	mixed	(Default) value of this field
+	 * @var  mixed  (Default) value of this field
 	 */
 	protected $value;
 
 	/**
-	 * @var	array	Rules for validation
+	 * @var  array  Rules for validation
 	 */
 	protected $rules = array();
 
 	/**
-	 * @var	array	Attributes for form generation
+	 * @var  array  Attributes for form generation
 	 */
 	protected $attributes = array();
 
 	/**
-	 * @var	array	Options, only available for select, radio & checkbox types
+	 * @var  array  Options, only available for select, radio & checkbox types
 	 */
 	protected $options = array();
 
 	/**
-	 * @var	string	Template for form building
+	 * @var  string  Template for form building
 	 */
 	protected $template;
 
 	/**
 	 * Constructor
 	 *
-	 * @param 	string
-	 * @param	string
-	 * @param	array
-	 * @param	array
-	 * @param	Fieldset
+	 * @param  string
+	 * @param  string
+	 * @param  array
+	 * @param  array
+	 * @param  Fieldset
 	 */
-	public function __construct($name, $label = '', Array $attributes = array(), Array $rules = array(), Fieldset $fieldset)
+	public function __construct($name, $label = '', array $attributes = array(), array $rules = array(), Fieldset $fieldset)
 	{
 		$this->name = (string) $name;
 		$this->fieldset = $fieldset;
-		isset($attributes['options']) and  $this->set_options($attributes['options']);
 
 		// Don't allow name in attributes
 		unset($attributes['name']);
@@ -116,7 +112,8 @@ class Fieldset_Field
 	/**
 	 * Change the field label
 	 *
-	 * @param	string
+	 * @param   string
+	 * @return  Fieldset_Field  this, to allow chaining
 	 */
 	public function set_label($label)
 	{
@@ -129,7 +126,8 @@ class Fieldset_Field
 	/**
 	 * Change the field type for form generation
 	 *
-	 * @param	string
+	 * @param   string
+	 * @return  Fieldset_Field  this, to allow chaining
 	 */
 	public function set_type($type)
 	{
@@ -142,8 +140,9 @@ class Fieldset_Field
 	/**
 	 * Change the field's current or default value
 	 *
-	 * @param  string
-	 * @param  bool
+	 * @param   string
+	 * @param   bool
+	 * @return  Fieldset_Field  this, to allow chaining
 	 */
 	public function set_value($value, $repopulate = false)
 	{
@@ -170,7 +169,8 @@ class Fieldset_Field
 	/**
 	 * Template the output
 	 *
-	 * @param	string
+	 * @param   string
+	 * @return  Fieldset_Field  this, to allow chaining
 	 */
 	public function set_template($template = null)
 	{
@@ -183,66 +183,13 @@ class Fieldset_Field
 	 * Add a validation rule
 	 * any further arguements after the callback will be used as arguements for the callback
 	 *
-	 * @param	string|Callback	either a validation rule or full callback
-	 * @return	Fieldset_Field	this, to allow chaining
+	 * @param   string|Callback	either a validation rule or full callback
+	 * @return  Fieldset_Field  this, to allow chaining
 	 */
 	public function add_rule($callback)
 	{
 		$args = array_slice(func_get_args(), 1);
-
-		// Rules are validated and only accepted when given as an array consisting of
-		// array(callback, params) or just callbacks in an array.
-		$callable_rule = false;
-		if (is_string($callback))
-		{
-			$callback_method = '_validation_'.$callback;
-			$callables = $this->fieldset->validation()->callables();
-			foreach ($callables as $callback_class)
-			{
-				if (method_exists($callback_class, $callback_method))
-				{
-					$callable_rule = true;
-					$this->rules[] = array(array($callback => array($callback_class, $callback_method)), $args);
-					break;
-				}
-			}
-		}
-
-		// when no callable function was found, try regular callbacks
-		if ( ! $callable_rule)
-		{
-			if (is_callable($callback))
-			{
-				if ($callback instanceof \Closure)
-				{
-					$callback_name = 'closure';
-				}
-				elseif (is_array($callback))
-				{
-					$callback_name = preg_replace('#^([a-z_]*\\\\)*#i', '',
-						is_object($callback[0]) ? get_class($callback[0]) : $callback[0]).':'.$callback[1];
-				}
-				else
-				{
-					$callback_name = str_replace('::', ':', $callback);
-				}
-
-				$this->rules[] = array(array($callback_name => $callback), $args);
-			}
-			elseif (is_array($callback) and is_callable(reset($callback)))
-			{
-				$this->rules[] = array($callback, $args);
-			}
-			else
-			{
-				$string = ! is_array($callback)
-						? $callback
-						: (is_object(@$callback[0])
-							? get_class(@$callback[0]).'->'.@$callback[1]
-							: @$callback[0].'::'.@$callback[1]);
-				Error::notice('Invalid rule "'.$string.'" passed to Validation, not used.');
-			}
-		}
+		$this->rules[] = array($callback, $args);
 
 		// Set required setting for forms when rule was applied
 		if ($callback === 'required')
@@ -256,11 +203,11 @@ class Fieldset_Field
 	/**
 	 * Sets an attribute on the field
 	 *
-	 * @param	string
-	 * @param	mixed			new value or null to unset
-	 * @return	Fieldset_Field	this, to allow chaining
+	 * @param   string
+	 * @param   mixed   new value or null to unset
+	 * @return  Fieldset_Field  this, to allow chaining
 	 */
-	public function set_attribute($config, $value)
+	public function set_attribute($config, $value = null)
 	{
 		$config = is_array($config) ? $config : array($config => $value);
 		foreach ($config as $key => $value)
@@ -281,9 +228,9 @@ class Fieldset_Field
 	/**
 	 * Get a single or multiple attributes by key
 	 *
-	 * @param	string|array	a single key or multiple in an array, empty to fetch all
-	 * @param	mixed			default output when attribute wasn't set
-	 * @return	mixed|array		a single attribute or multiple in an array when $key input was an array
+	 * @param   string|array  a single key or multiple in an array, empty to fetch all
+	 * @param   mixed         default output when attribute wasn't set
+	 * @return  mixed|array   a single attribute or multiple in an array when $key input was an array
 	 */
 	public function get_attribute($key = null, $default = null)
 	{
@@ -308,17 +255,14 @@ class Fieldset_Field
 	/**
 	 * Add an option value with label
 	 *
-	 * @param	string|array	one option value, or multiple value=>label pairs in an array
-	 * @param	string
-	 * @return	Fieldset_Field	this, to allow chaining
+	 * @param   string|array  one option value, or multiple value=>label pairs in an array
+	 * @param   string
+	 * @return  Fieldset_Field  this, to allow chaining
 	 */
 	public function set_options($value, $label = null)
 	{
 		$value = is_array($value) ? $value : array($value => $label);
-		foreach ($value as $key => $label)
-		{
-			$this->options[(string) $key] = (string) $label;
-		}
+		$this->options = \Arr::merge($this->options, $value);
 
 		return $this;
 	}
@@ -327,7 +271,7 @@ class Fieldset_Field
 	 * Magic get method to allow getting class properties but still having them protected
 	 * to disallow writing.
 	 *
-	 * @return	mixed
+	 * @return  mixed
 	 */
 	public function __get($property)
 	{
@@ -336,6 +280,8 @@ class Fieldset_Field
 
 	/**
 	 * Build the field
+	 *
+	 * @return  string
 	 */
 	public function __toString()
 	{
@@ -352,7 +298,7 @@ class Fieldset_Field
 	/**
 	 * Return the parent Fieldset object
 	 *
-	 * @return	Fieldset
+	 * @return  Fieldset
 	 */
 	public function fieldset()
 	{
@@ -361,6 +307,8 @@ class Fieldset_Field
 
 	/**
 	 * Alias for $this->fieldset->add() to allow chaining
+	 *
+	 * @return Fieldset_Field
 	 */
 	public function add($name, $label = '', array $attributes = array(), array $rules = array())
 	{
@@ -369,6 +317,8 @@ class Fieldset_Field
 
 	/**
 	 * Alias for $this->fieldset->form()->build_field() for this field
+	 *
+	 * @return  string
 	 */
 	public function build()
 	{
@@ -377,6 +327,8 @@ class Fieldset_Field
 
 	/**
 	 * Alias for $this->fieldset->validation->input() for this field
+	 *
+	 * @return  mixed
 	 */
 	public function input()
 	{
@@ -385,6 +337,8 @@ class Fieldset_Field
 
 	/**
 	 * Alias for $this->fieldset->validation->validated() for this field
+	 *
+	 * @return  mixed
 	 */
 	public function validated()
 	{
@@ -393,11 +347,11 @@ class Fieldset_Field
 
 	/**
 	 * Alias for $this->fieldset->validation->error() for this field
+	 *
+	 * @return  Validation_Error
 	 */
 	public function error()
 	{
-		return $this->fieldset()->validation()->errors($this->name);
+		return $this->fieldset()->validation()->error($this->name);
 	}
 }
-
-/* End of file field.php */

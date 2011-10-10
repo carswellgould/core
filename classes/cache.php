@@ -33,12 +33,25 @@ class Cache {
 	/**
 	 * Creates a new cache instance.
 	 *
-	 * @access  public
+	 * @param   mixed                 The identifier of the cache, can be anything but empty
+	 * @param   array|string          Either an array of settings or the storage driver to be used
+	 * @return  Cache_Storage_Driver  The new cache object
+	 * @deprecated until 1.2
+	 */
+	public static function factory($identifier, $config = array())
+	{
+		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a forge() instead.', __METHOD__);
+		return static::forge($identifier, $config);
+	}
+
+	/**
+	 * Creates a new cache instance.
+	 *
 	 * @param   mixed                 The identifier of the cache, can be anything but empty
 	 * @param   array|string          Either an array of settings or the storage driver to be used
 	 * @return  Cache_Storage_Driver  The new cache object
 	 */
-	public static function factory($identifier, $config = array())
+	public static function forge($identifier, $config = array())
 	{
 		// load the default config
 		$defaults = \Config::get('cache', array());
@@ -54,7 +67,7 @@ class Cache {
 
 		if (empty($config['driver']))
 		{
-			throw new \Fuel_Exception('No cache driver given or no default cache driver set.');
+			throw new \FuelException('No cache driver given or no default cache driver set.');
 		}
 
 		$class = '\\Cache_Storage_'.ucfirst($config['driver']);
@@ -78,7 +91,9 @@ class Cache {
 	 */
 	public static function set($identifier, $contents = null, $expiration = false, $dependencies = array())
 	{
-		$cache = static::factory($identifier);
+		$contents = \Fuel::value($contents);
+
+		$cache = static::forge($identifier);
 		return $cache->set($contents, $expiration, $dependencies);
 	}
 
@@ -88,13 +103,13 @@ class Cache {
 	 * @param   mixed         The identifier of the cache, can be anything but empty
 	 * @param   string|array  Valid PHP callback
 	 * @param   array         Arguements for the above function/method
-	 * @param   int           Cache expiration in minutes
+	 * @param   int           Cache expiration in seconds
 	 * @param   array         Contains the identifiers of caches this one will depend on (not supported by all drivers!)
 	 * @return  mixed
 	 */
 	public static function call($identifier, $callback, $args = array(), $expiration = null, $dependencies = array())
 	{
-		$cache = static::factory($identifier);
+		$cache = static::forge($identifier);
 		return $cache->call($callback, $args, $expiration, $dependencies);
 	}
 
@@ -108,7 +123,7 @@ class Cache {
 	 */
 	public static function get($identifier, $use_expiration = true)
 	{
-		$cache = static::factory($identifier);
+		$cache = static::forge($identifier);
 		return $cache->get($use_expiration);
 	}
 
@@ -120,7 +135,7 @@ class Cache {
 	 */
 	public static function delete($identifier)
 	{
-		$cache = static::factory($identifier);
+		$cache = static::forge($identifier);
 		return $cache->delete();
 	}
 
@@ -134,9 +149,8 @@ class Cache {
 	 */
 	public static function delete_all($section = null, $driver = null)
 	{
-		$cache = static::factory('__NOT_USED__', $driver);
+		$cache = static::forge('__NOT_USED__', $driver);
 		return $cache->delete_all($section);
 	}
 }
 
-/* End of file cache.php */

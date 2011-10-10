@@ -12,15 +12,20 @@
 
 namespace Fuel\Core;
 
+class ConfigException extends \FuelException { }
+
 class Config {
 
 	public static $loaded_files = array();
 
 	public static $items = array();
 
-	public static function load($file, $group = null, $reload = false)
+	public static function load($file, $group = null, $reload = false, $overwrite = false)
 	{
-		if ( ! is_array($file) && array_key_exists($file, static::$loaded_files) and ! $reload)
+		if ( ! $reload and
+		     ! is_array($file) and
+		     ! is_object($file) and
+		    array_key_exists($file, static::$loaded_files))
 		{
 			return false;
 		}
@@ -30,20 +35,40 @@ class Config {
 		{
 			$config = $file;
 		}
-		elseif ($paths = \Fuel::find_file('config', $file, '.php', true))
+		elseif (is_string($file))
 		{
-			// Reverse the file list so that we load the core configs first and
-			// the app can override anything.
-			$paths = array_reverse($paths);
-			foreach ($paths as $path)
+			$info = pathinfo($file);
+			$type = isset($info['extension']) ? $info['extension'] : 'php';
+			$file = $info['filename'];
+			$class = '\\Config_'.ucfirst($type);
+
+			if (class_exists($class))
 			{
-				$config = array_merge($config, \Fuel::load($path));
+				static::$loaded_files[$file] = true;
+				$file = new $class($file);
 			}
+			else
+			{
+				throw new \FuelException(sprintf('Invalid config type "%s".', $type));
+			}
+		}
+
+		if ($file instanceof Config_Interface)
+		{
+			try
+			{
+				$config = $file->load($overwrite);
+			}
+			catch (\ConfigException $e)
+			{
+				$config = array();
+			}
+			$group = $group === true ? $file->group() : $group;
 		}
 
 		if ($group === null)
 		{
-			static::$items = $reload ? $config : static::$items + $config;
+			static::$items = $reload ? $config : ($overwrite ? array_merge(static::$items, $config) : \Arr::merge(static::$items, $config));
 		}
 		else
 		{
@@ -52,13 +77,9 @@ class Config {
 			{
 				static::$items[$group] = array();
 			}
-			static::$items[$group] = array_merge(static::$items[$group],$config);
+			static::$items[$group] = $overwrite ? array_merge(static::$items[$group],$config) : \Arr::merge(static::$items[$group],$config);
 		}
 
-		if ( ! is_array($file))
-		{
-			static::$loaded_files[$file] = true;
-		}
 		return $config;
 	}
 
@@ -116,7 +137,7 @@ CONF;
 		$content .= <<<CONF
 
 
-/* End of file $file.php */
+
 CONF;
 
 		// make sure we have a fallback
@@ -124,7 +145,7 @@ CONF;
 
 		$path = pathinfo($path);
 
-		return File::update($path['dirname'], $path['basename'], $content);
+		return \File::update($path['dirname'], $path['basename'], $content);
 	}
 
 	public static function get($item, $default = null)
@@ -133,104 +154,16 @@ CONF;
 		{
 			return static::$items[$item];
 		}
-
-		if (strpos($item, '.') !== false)
-		{
-			$parts = explode('.', $item);
-
-			switch (count($parts))
-			{
-				case 2:
-					if (isset(static::$items[$parts[0]][$parts[1]]))
-					{
-						return static::$items[$parts[0]][$parts[1]];
-					}
-				break;
-
-				case 3:
-					if (isset(static::$items[$parts[0]][$parts[1]][$parts[2]]))
-					{
-						return static::$items[$parts[0]][$parts[1]][$parts[2]];
-					}
-				break;
-
-				case 4:
-					if (isset(static::$items[$parts[0]][$parts[1]][$parts[2]][$parts[3]]))
-					{
-						return static::$items[$parts[0]][$parts[1]][$parts[2]][$parts[3]];
-					}
-				break;
-
-				default:
-					$return = false;
-					foreach ($parts as $part)
-					{
-						if ($return === false and isset(static::$items[$part]))
-						{
-							$return = static::$items[$part];
-						}
-						elseif (isset($return[$part]))
-						{
-							$return = $return[$part];
-						}
-						else
-						{
-							return $default;
-						}
-					}
-					return $return;
-				break;
-			}
-		}
-
-		return $default;
+		return \Fuel::value(\Arr::get(static::$items, $item, $default));
 	}
 
 	public static function set($item, $value)
 	{
-		$parts = explode('.', $item);
+		return \Arr::set(static::$items, $item, \Fuel::value($value));
+	}
 
-		switch (count($parts))
-		{
-			case 1:
-				static::$items[$parts[0]] = $value;
-			break;
-
-			case 2:
-				static::$items[$parts[0]][$parts[1]] = $value;
-			break;
-
-			case 3:
-				static::$items[$parts[0]][$parts[1]][$parts[2]] = $value;
-			break;
-
-			case 4:
-				static::$items[$parts[0]][$parts[1]][$parts[2]][$parts[3]] = $value;
-			break;
-
-			default:
-				$item =& static::$items;
-				foreach ($parts as $part)
-				{
-					// if it's not an array it can't have a subvalue
-					if ( ! is_array($item))
-					{
-						return false;
-					}
-
-					// if the part didn't exist yet: add it
-					if ( ! isset($item[$part]))
-					{
-						$item[$part] = array();
-					}
-
-					$item =& $item[$part];
-				}
-				$item = $value;
-			break;
-		}
-		return true;
+	public static function delete($item)
+	{
+		return \Arr::delete(static::$items, $item);
 	}
 }
-
-/* End of file config.php */

@@ -40,7 +40,7 @@ abstract class Database_Connection {
 	 *
 	 * @param   string   instance name
 	 * @param   array    configuration parameters
-	 * @return  Database
+	 * @return  Database_Connection
 	 */
 	public static function instance($name = NULL, array $config = NULL)
 	{
@@ -61,7 +61,7 @@ abstract class Database_Connection {
 
 			if ( ! isset($config['type']))
 			{
-				throw new \Fuel_Exception("Database type not defined in {$name} configuration");
+				throw new \FuelException("Database type not defined in {$name} configuration");
 			}
 
 			// Set the driver class name

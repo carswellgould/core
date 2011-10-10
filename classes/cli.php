@@ -101,7 +101,7 @@ class Cli {
 	{
 		if ( ! isset(static::$args[$name]))
 		{
-			return $default;
+			return \Fuel::value($default);
 		}
 		return static::$args[$name];
 	}
@@ -389,12 +389,12 @@ class Cli {
 		
 		if ( ! array_key_exists($foreground, static::$foreground_colors))
 		{
-			throw new \Fuel_Exception('Invalid CLI foreground color: '.$foreground);
+			throw new \FuelException('Invalid CLI foreground color: '.$foreground);
 		}
 
 		if ( $background !== null and ! array_key_exists($background, static::$background_colors))
 		{
-			throw new \Fuel_Exception('Invalid CLI background color: '.$background);
+			throw new \FuelException('Invalid CLI background color: '.$background);
 		}
 
 		$string = "\033[".static::$foreground_colors[$foreground]."m";
@@ -435,4 +435,3 @@ class Cli {
 
 }
 
-/* End of file cli.php */

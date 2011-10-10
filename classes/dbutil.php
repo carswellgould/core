@@ -135,9 +135,10 @@ class DBUtil {
 	protected static function alter_fields($type, $table, $fields)
 	{
 		$sql = 'ALTER TABLE '.\DB::quote_identifier(\DB::table_prefix($table)).' ';
+		
 		if ($type === 'DROP')
 		{
-			if( ! is_array($fields))
+			if ( ! is_array($fields))
 			{
 				$fields = array($fields);
 			}
@@ -145,10 +146,16 @@ class DBUtil {
 				return 'DROP '.\DB::quote_identifier($field);
 			}, $fields);
 			$sql .= implode(', ', $fields);
-		} else {
-		  $sql .= $type.' ';
-			$sql .= '('.static::process_fields($fields).')';
 		}
+		else
+		{
+			$use_brackets = ! in_array($type, array('ADD', 'CHANGE', 'MODIFY'));
+			$sql .= $type.' ';
+			$use_brackets and $sql .= '(';
+			$sql .= static::process_fields($fields);
+			$use_brackets and $sql .= ')';
+		}
+		
 		return \DB::query($sql, \DB::UPDATE)->execute();
 	}
 
@@ -194,13 +201,13 @@ class DBUtil {
 	 */
 	protected static function process_charset($charset = null, $is_default = false)
 	{
-		$charset or $charset = \Config::get('db.'.\Config::get('environment').'.charset', null);
-		if(empty($charset))
+		$charset or $charset = \Config::get('db.'.\Fuel::$env.'.charset', null);
+		if (empty($charset))
 		{
 			return '';
 		}
 
-		if(($pos = stripos($charset, '_')) !== false)
+		if (($pos = stripos($charset, '_')) !== false)
 		{
 			$charset = ' CHARACTER SET '.substr($charset, 0, $pos).' COLLATE '.$charset;
 		}
@@ -271,9 +278,9 @@ class DBUtil {
 	}
 
 	/*
-	 * Executes table maintenance. Will throw Fuel_Exception when the operation is not supported.
+	 * Executes table maintenance. Will throw FuelException when the operation is not supported.
 	 *
-	 * @throws	Fuel_Exception
+	 * @throws	FuelException
 	 * @param     string    $table    the table name
 	 * @return    bool      whether the operation has succeeded
 	 */
@@ -283,18 +290,18 @@ class DBUtil {
 		$type = $result->get('Msg_type');
 		$message = $result->get('Msg_text');
 		$table = $result->get('Table');
-		if($type === 'status' and in_array(strtolower($message), array('ok','table is already up to date')))
+		if ($type === 'status' and in_array(strtolower($message), array('ok','table is already up to date')))
 		{
 			return true;
 		}
 
-		if($type === 'error')
+		if ($type === 'error')
 		{
-			\Log::error('Table: '.$table.', Operation: '.$operation.', Message: '.$result->get('Msg_text'), 'DBUtil::table_maintenance');
+			logger(\Fuel::L_ERROR, 'Table: '.$table.', Operation: '.$operation.', Message: '.$result->get('Msg_text'), 'DBUtil::table_maintenance');
 		}
 		else
 		{
-			\Log::write(ucfirst($type), 'Table: '.$table.', Operation: '.$operation.', Message: '.$result->get('Msg_text'), 'DBUtil::table_maintenance');
+			logger(ucfirst($type), 'Table: '.$table.', Operation: '.$operation.', Message: '.$result->get('Msg_text'), 'DBUtil::table_maintenance');
 		}
 		return false;
 	}
@@ -310,4 +317,3 @@ class DBUtil {
 
 }
 
-/* End of file dbutil.php */

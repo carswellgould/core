@@ -22,9 +22,9 @@
 
 return array(
 	/**
-	 * The driver to be used. Currently gd or imagemagick
+	 * The driver to be used. Currently gd, imagemagick or imagick
 	 */
-	'driver' => 'imagemagick',
+	'driver' => 'gd',
 
 	/**
 	 * Sets the background color of the image.
@@ -53,12 +53,12 @@ return array(
 	/**
 	 * The install location of the imagemagick executables.
 	 */
-	'imagemagick_dir' => 'C:/wamp/imagemagick/',
+	'imagemagick_dir' => '/usr/bin/',
 
 	/**
 	 * Temporary directory to store image files in that are being edited.
 	 */
-	'temp_dir' => 'C:/wamp/tmp/',
+	'temp_dir' => APPPATH.'tmp'.DS,
 
 	/**
 	 * The string of text to append to the image.
@@ -68,10 +68,10 @@ return array(
 	/**
 	 * Sets if the queue should be cleared after a save(), save_pa(), or output().
 	 */
-	'clear_queue' => false,
+	'clear_queue' => true,
 
 	/**
-	 * Determines whether to automatically reload the image (true) or keep the changes (false) when saving or outputting.
+	 * Determines whether to automatically reload the image (false) or keep the changes (true) when saving or outputting.
 	 */
 	'persistence' => false,
 
@@ -91,7 +91,7 @@ return array(
 		 *
 		 * Note that config values here override the current configuration.
 		 *
-		 * Libraries cannot be changed in here. (TODO - Add this feature)
+		 * Driver cannot be changed in here.
 		 */
 		'example' => array(
 			'quality' => 100,
@@ -106,4 +106,4 @@ return array(
 	)
 );
 
-/* End of file image.php */
+

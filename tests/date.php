@@ -27,7 +27,11 @@ class Tests_Date extends TestCase {
 	 */
 	public function test_days_in_month()
 	{
-		$output = Date::days_in_month(2);
+		$output = Date::days_in_month(8);
+		$expected = 31;
+		$this->assertEquals($expected, $output);
+
+		$output = Date::days_in_month(2,2001);
 		$expected = 28;
 		$this->assertEquals($expected, $output);
 
@@ -45,7 +49,7 @@ class Tests_Date extends TestCase {
 	{
 		date_default_timezone_set('UTC');
 		
-		$output = Date::Factory( 1294176140 )->format("%m/%d/%Y");
+		$output = Date::forge( 1294176140 )->format("%m/%d/%Y");
 		$expected = "01/04/2011";
 
 		$this->assertEquals($expected, $output);
@@ -58,7 +62,7 @@ class Tests_Date extends TestCase {
 	 */
 	public function test_get_timestamp()
 	{
-		$output = Date::Factory( 1294176140 )->get_timestamp();
+		$output = Date::forge( 1294176140 )->get_timestamp();
 		$expected = 1294176140;
 
 		$this->assertEquals($expected, $output);
@@ -71,7 +75,7 @@ class Tests_Date extends TestCase {
 	 */
 	public function test_get_timezone()
 	{
-		$output = Date::Factory( 1294176140, "Europe/London" )->get_timezone();
+		$output = Date::forge( 1294176140, "Europe/London" )->get_timezone();
 		$expected = "Europe/London";
 
 		$this->assertEquals($expected, $output);
@@ -84,7 +88,7 @@ class Tests_Date extends TestCase {
 	 */
 	public function test_set_timezone()
 	{
-		$output = Date::Factory( 1294176140 )->set_timezone("America/Chicago")->get_timezone();
+		$output = Date::forge( 1294176140 )->set_timezone("America/Chicago")->get_timezone();
 		$expected = "America/Chicago";
 		
 		$this->assertEquals($expected, $output);
@@ -132,4 +136,3 @@ class Tests_Date extends TestCase {
 	}
 }
 
-/* End of file DateTest.php */

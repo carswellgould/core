@@ -20,7 +20,7 @@ namespace Fuel\Core;
  */
 class Tests_Arr extends TestCase {
 
-	public function person_provider()
+	public static function person_provider()
 	{
 		return array(
 			array(
@@ -62,13 +62,52 @@ class Tests_Arr extends TestCase {
 				'name' => 'Grape',
 				),
 			);
-		
+
 		$expected = array(
 			'red' => 'Apple',
 			'yellow' => 'Banana',
 			'purple' => 'Grape',
 			);
 		$output = Arr::assoc_to_keyval($assoc, 'color', 'name');
+		$this->assertEquals($expected, $output);
+	}
+	
+	/**
+	 * Tests Arr::key_exists()
+	 *
+	 * @test
+	 * @dataProvider person_provider
+	 */
+	public function test_key_exists_with_key_found($person)
+	{
+		$expected = true;
+		$output = Arr::key_exists($person, "name");
+		$this->assertEquals($expected, $output);
+	}
+	
+	/**
+	 * Tests Arr::key_exists()
+	 *
+	 * @test
+	 * @dataProvider person_provider
+	 */
+	public function test_key_exists_with_key_not_found($person)
+	{
+		$expected = false;
+		$output = Arr::key_exists($person, "unknown");
+		$this->assertEquals($expected, $output);
+	}
+	
+	/**
+	 * Tests Arr::key_exists()
+	 *
+	 * @test
+	 * @dataProvider person_provider
+	 */
+	public function test_key_exists_with_dot_separated_key($person)
+	{
+		$expected = true;
+		$output = Arr::key_exists($person, "location.city");
 		$this->assertEquals($expected, $output);
 	}
 
@@ -116,12 +155,11 @@ class Tests_Arr extends TestCase {
 	 * Tests Arr::element()
 	 *
 	 * @test
+	 * @expectedException InvalidArgumentException
 	 */
-	public function test_element_when_array_is_not_an_array()
+	public function test_element_throws_exception_when_array_is_not_an_array()
 	{
-		$expected = "Unknown Name";
 		$output = Arr::element('Jack', 'name', 'Unknown Name');
-		$this->assertEquals($expected, $output);
 	}
 
 	/**
@@ -175,11 +213,31 @@ class Tests_Arr extends TestCase {
 	 *
 	 * @test
 	 * @dataProvider person_provider
-	 * @expectedException InvalidArgumentException
 	 */
-	public function test_elements_throws_exception_when_keys_is_not_an_array($person)
+	public function test_elements_when_keys_is_not_an_array($person)
 	{
+		$expected = 'Jack';
 		$output = Arr::elements($person, 'name', 'Unknown');
+		$this->assertEquals($expected, $output);
+	}
+
+	/**
+	 * Tests Arr::flatten()
+	 *
+	 * @test
+	 */
+	public function test_flatten()
+	{
+		$indexed = array ( array('a'), array('b'), array('c') );
+
+		$expected = array(
+			"0_0" => "a",
+			"1_0" => "b",
+			"2_0" => "c",
+		);
+
+		$output = Arr::flatten($indexed, '_');
+		$this->assertEquals($expected, $output);
 	}
 
 	/**
@@ -435,7 +493,7 @@ class Tests_Arr extends TestCase {
 
 	/**
 	 * Tests Arr::filter_keys()
-	 * 
+	 *
 	 * @test
 	 */
 	public function test_filter_keys()
@@ -480,6 +538,46 @@ class Tests_Arr extends TestCase {
 		$expected = null;
 		$this->assertEquals($expected, Arr::to_assoc($arr));
 	}
+	
+	/**
+	 * Tests Arr::prepend()
+	 *
+	 * @test
+	 */
+	public function test_prepend()
+	{
+		$arr = array(
+			'two' => 2,
+			'three' => 3,
+		);
+		$expected = array(
+			'one' => 1,
+			'two' => 2,
+			'three' => 3,
+		);
+		Arr::prepend($arr, 'one', 1);
+		$this->assertEquals($expected, $arr);
+	}
+	
+	/**
+	 * Tests Arr::prepend()
+	 *
+	 * @test
+	 */
+	public function test_prepend_array()
+	{
+		$arr = array(
+			'two' => 2,
+			'three' => 3,
+		);
+		$expected = array(
+			'one' => 1,
+			'two' => 2,
+			'three' => 3,
+		);
+		Arr::prepend($arr, array('one' => 1));
+		$this->assertEquals($expected, $arr);
+	}
 }
 
-/* End of file arr.php */
+

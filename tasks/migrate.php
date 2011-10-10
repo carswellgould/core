@@ -41,7 +41,7 @@ class Migrate {
 		}
 
 		// Not a lot of point in this
-		else if ($version == $current_version)
+		else if ( ! is_null($version) and $version == $current_version)
 		{
 			throw new \Oil\Exception('Migration: ' . $version .' already in use.');
 			return;
@@ -78,7 +78,7 @@ class Migrate {
 				\Cli::write('Migrated to latest version: ' . $result .'.', 'green');
 			}
 		}
-		
+
 	}
 
 	public static function up()
@@ -100,13 +100,13 @@ class Migrate {
 	public static function down()
 	{
 		\Config::load('migrations', true);
-		
+
 		if (($version = \Config::get('migrations.version') - 1) < 0)
 		{
 			throw new \Oil\Exception('You are already on the first migration.');
 		}
 
-		if (\Migrate::version($version))
+		if (\Migrate::version($version) !== false)
 		{
 			static::_update_version($version);
 			\Cli::write("Migrated to version: {$version}.", 'green');
@@ -167,4 +167,3 @@ HELP;
 	}
 }
 
-/* End of file tasks/migrate.php */

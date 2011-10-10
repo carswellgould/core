@@ -12,19 +12,18 @@
 
 namespace Fuel\Core;
 
-// ------------------------------------------------------------------------
+
 
 /**
  * Validation error
  *
  * Contains all the information about a validation error
  *
- * @package		Fuel
- * @subpackage	Core
- * @category	Core
- * @author		Jelmer Schreuder
+ * @package   Fuel
+ * @category  Core
  */
 class Validation_Error extends \Exception {
+
 	/**
 	 * Load validation Language file when errors are thrown
 	 */
@@ -33,20 +32,35 @@ class Validation_Error extends \Exception {
 		\Lang::load('validation', true);
 	}
 
-	public $field = '';
-	public $value = '';
-	public $rule = '';
+	/**
+	 * @var  Fieldset_Field  the field that caused the error
+	 */
+	public $field;
+
+	/**
+	 * @var  mixed  value that failed to validate
+	 */
+	public $value;
+
+	/**
+	 * @var  string  validation rule string representation
+	 */
+	public $rule;
+
+	/**
+	 * @var  array  variables passed to rule other than the value
+	 */
 	public $params = array();
 
 	/**
 	 * Constructor
 	 *
-	 * @param	array		Validation field description
-	 * @param	mixed		Unvalidated value
-	 * @param	callback	Failed rule callback
-	 * @param	array		Failed rule callback params
+	 * @param  array  Fieldset_Field object
+	 * @param  mixed  value that failed to validate
+	 * @param  array  contains rule name as key and callback as value
+	 * @param  array  additional rule params
 	 */
-	public function __construct($field, $value, $callback, $params)
+	public function __construct(Fieldset_Field $field, $value, $callback, $params)
 	{
 		$this->field   = $field;
 		$this->value   = $value;
@@ -59,21 +73,21 @@ class Validation_Error extends \Exception {
 	 *
 	 * Shows the error message which can be taken from loaded language file.
 	 *
-	 * @param	string	HTML to prefix error message
-	 * @param	string	HTML to postfix error message
-	 * @param	string	Message to use, or false to try and load it from Lang class
-	 * @return	string
+	 * @param   string  HTML to prefix error message
+	 * @param   string  HTML to postfix error message
+	 * @param   string  Message to use, or false to try and load it from Lang class
+	 * @return  string
 	 */
 	public function get_message($msg = false, $open = '', $close = '')
 	{
-		$open   = \Config::get('validation.open_single_error', $open);
-		$close  = \Config::get('validation.close_single_error', $close);
+		$open   = empty($open)  ? \Config::get('validation.open_single_error', '')  : $open;
+		$close  = empty($close) ? \Config::get('validation.close_single_error', '') : $close;
 
 		if ($msg === false)
 		{
 			$msg = $this->field->fieldset()->validation()->get_message($this->rule);
 			$msg = $msg === false
-				? __('validation.'.$this->rule) ?: __('validation.'.Arr::element(explode(':', $this->rule), 0))
+				? __('validation.'.$this->rule) ?: __('validation.'.Arr::get(explode(':', $this->rule), 0))
 				: $msg;
 		}
 		if ($msg == false)
@@ -85,6 +99,12 @@ class Validation_Error extends \Exception {
 		return $open.(strpos($msg, ':') === false ? $msg : $this->_replace_tags($msg)).$close;
 	}
 
+	/**
+	 * Replace templating tags with values
+	 *
+	 * @param   error message to parse
+	 * @return  string
+	 */
 	protected function _replace_tags($msg)
 	{
 		// prepare label & value
@@ -122,10 +142,15 @@ class Validation_Error extends \Exception {
 		return str_replace($find, $replace, $msg);
 	}
 
+	/**
+	 * Generate the error message
+	 *
+	 * @return  string
+	 */
 	public function __toString()
 	{
 		return $this->get_message();
 	}
 }
 
-/* End of file validation.php */
+

@@ -55,11 +55,16 @@ class Security {
 
 	/**
 	 * Cleans the request URI
+	 *
+	 * @param  string  $uri     uri to clean
+	 * @param  bool    $strict  whether to remove relative directories
 	 */
-	public static function clean_uri($uri)
+	public static function clean_uri($uri, $strict = false)
 	{
 		$filters = \Config::get('security.uri_filter', array());
 		$filters = is_array($filters) ? $filters : array($filters);
+
+		$strict and $uri = preg_replace(array("/\.+\//", '/\/+/'), '/', $uri);
 
 		return static::clean($uri, $filters);
 	}
@@ -77,9 +82,9 @@ class Security {
 	/**
 	 * Generic variable clean method
 	 */
-	public static function clean($var, $filters = null)
+	public static function clean($var, $filters = null, $type = 'security.input_filter')
 	{
-		is_null($filters) and $filters = \Config::get('security.input_filter', array());
+		is_null($filters) and $filters = \Config::get($type, array());
 		$filters = is_array($filters) ? $filters : array($filters);
 
 		foreach ($filters as $filter)
@@ -176,20 +181,30 @@ class Security {
 		{
 			$value = htmlentities($value, ENT_COMPAT, \Fuel::$encoding, false);
 		}
-		elseif (is_array($value) || $value instanceof \Iterator)
+		elseif (is_array($value) or ($value instanceof \Iterator and $value instanceof \ArrayAccess))
 		{
+			// Add to $already_cleaned variable when object
+			is_object($value) and $already_cleaned[] = $value;
+
 			foreach ($value as $k => $v)
 			{
 				$value[$k] = static::htmlentities($v);
 			}
+		}
+		elseif ($value instanceof \Iterator or get_class($value) == 'stdClass')
+		{
+			// Add to $already_cleaned variable
+			$already_cleaned[] = $value;
 
-			// Add to $already_cleaned variable when object
-			is_object($value) and $already_cleaned[] = $value;
+			foreach ($value as $k => $v)
+			{
+				$value->{$k} = static::htmlentities($v);
+			}
 		}
 		elseif (is_object($value))
 		{
 			// Check if the object is whitelisted and return when that's the case
-			foreach (\Config::get('security.whitelisted_classes') as $class)
+			foreach (\Config::get('security.whitelisted_classes', array()) as $class)
 			{
 				if (is_a($value, $class))
 				{
@@ -301,6 +316,51 @@ class Security {
 
 		return $output;
 	}
+
+	/**
+	 * JS set token
+	 *
+	 * Produces JavaScript fuel_set_csrf_token() function that will update the current
+	 * CSRF token in the form when called, based on the value of the csrf cookie
+	 *
+	 * @return string
+	 */
+	public static function js_set_token()
+	{
+		$output  = '<script type="text/javascript">
+	function fuel_set_csrf_token(form)
+	{
+		if (document.cookie.length > 0 && typeof form != undefined)
+		{
+			var c_name = "'.static::$csrf_token_key.'";
+			c_start = document.cookie.indexOf(c_name + "=");
+			if (c_start != -1)
+			{
+				c_start = c_start + c_name.length + 1;
+				c_end = document.cookie.indexOf(";" , c_start);
+				if (c_end == -1)
+				{
+					c_end=document.cookie.length;
+				}
+				value=unescape(document.cookie.substring(c_start, c_end));
+				if (value != "")
+				{
+					for(i=0; i<form.elements.length; i++)
+					{
+						if (form.elements[i].name == c_name)
+						{
+							form.elements[i].value = value;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}'.PHP_EOL;
+		$output .= '</script>'.PHP_EOL;
+
+		return $output;
+	}
 }
 
-/* End of file security.php */
+

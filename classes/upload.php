@@ -27,26 +27,27 @@ class Upload {
 	 * --------------------------------------------------------------------------- */
 
 	// duplicate the PHP standard error codes for consistency
-	const UPLOAD_ERR_OK						= UPLOAD_ERR_OK;
-	const UPLOAD_ERR_INI_SIZE				= UPLOAD_ERR_INI_SIZE;
-	const UPLOAD_ERR_FORM_SIZE				= UPLOAD_ERR_FORM_SIZE;
-	const UPLOAD_ERR_PARTIAL				= UPLOAD_ERR_PARTIAL;
-	const UPLOAD_ERR_NO_FILE				= UPLOAD_ERR_NO_FILE;
-	const UPLOAD_ERR_NO_TMP_DIR				= UPLOAD_ERR_NO_TMP_DIR;
-	const UPLOAD_ERR_CANT_WRITE				= UPLOAD_ERR_CANT_WRITE;
-	const UPLOAD_ERR_EXTENSION				= UPLOAD_ERR_EXTENSION;
+	const UPLOAD_ERR_OK         = UPLOAD_ERR_OK;
+	const UPLOAD_ERR_INI_SIZE   = UPLOAD_ERR_INI_SIZE;
+	const UPLOAD_ERR_FORM_SIZE  = UPLOAD_ERR_FORM_SIZE;
+	const UPLOAD_ERR_PARTIAL    = UPLOAD_ERR_PARTIAL;
+	const UPLOAD_ERR_NO_FILE    = UPLOAD_ERR_NO_FILE;
+	const UPLOAD_ERR_NO_TMP_DIR = UPLOAD_ERR_NO_TMP_DIR;
+	const UPLOAD_ERR_CANT_WRITE = UPLOAD_ERR_CANT_WRITE;
+	const UPLOAD_ERR_EXTENSION  = UPLOAD_ERR_EXTENSION;
 
 	// and add our own error codes
-	const UPLOAD_ERR_MAX_SIZE				= 101;
-	const UPLOAD_ERR_EXT_BLACKLISTED		= 102;
-	const UPLOAD_ERR_EXT_NOT_WHITELISTED	= 103;
-	const UPLOAD_ERR_TYPE_BLACKLISTED		= 104;
-	const UPLOAD_ERR_TYPE_NOT_WHITELISTED	= 105;
-	const UPLOAD_ERR_MIME_BLACKLISTED		= 106;
-	const UPLOAD_ERR_MIME_NOT_WHITELISTED	= 107;
-	const UPLOAD_ERR_MAX_FILENAME_LENGTH	= 108;
-	const UPLOAD_ERR_MOVE_FAILED			= 109;
-	const UPLOAD_ERR_DUPLICATE_FILE 		= 110;
+	const UPLOAD_ERR_MAX_SIZE             = 101;
+	const UPLOAD_ERR_EXT_BLACKLISTED      = 102;
+	const UPLOAD_ERR_EXT_NOT_WHITELISTED  = 103;
+	const UPLOAD_ERR_TYPE_BLACKLISTED     = 104;
+	const UPLOAD_ERR_TYPE_NOT_WHITELISTED = 105;
+	const UPLOAD_ERR_MIME_BLACKLISTED     = 106;
+	const UPLOAD_ERR_MIME_NOT_WHITELISTED = 107;
+	const UPLOAD_ERR_MAX_FILENAME_LENGTH  = 108;
+	const UPLOAD_ERR_MOVE_FAILED          = 109;
+	const UPLOAD_ERR_DUPLICATE_FILE       = 110;
+	const UPLOAD_ERR_MKDIR_FAILED         = 111;
 
 	/* ---------------------------------------------------------------------------
 	 * STATIC PROPERTIES
@@ -58,36 +59,36 @@ class Upload {
 	protected static $_defaults = array(
 		'auto_process'		=> false,
 		// validation settings
-		'max_size'			=> 0,
-		'max_length'		=> 0,
-		'ext_whitelist'		=> array(),
-		'ext_blacklist'		=> array(),
-		'type_whitelist'	=> array(),
-		'type_blacklist'	=> array(),
-		'mime_whitelist'	=> array(),
-		'mime_blacklist'	=> array(),
+		'max_size'       => 0,
+		'max_length'     => 0,
+		'ext_whitelist'  => array(),
+		'ext_blacklist'  => array(),
+		'type_whitelist' => array(),
+		'type_blacklist' => array(),
+		'mime_whitelist' => array(),
+		'mime_blacklist' => array(),
 		// save settings
-		'path'				=> '',
-		'prefix'			=> '',
-		'suffix'			=> '',
-		'extension'			=> '',
-		'create_path'		=> true,
-		'path_chmod'		=> 0777,
-		'file_chmod'		=> 0666,
-		'auto_rename'		=> true,
-		'overwrite'			=> false,
-		'randomize'			=> false,
-		'normalize'			=> false,
-		'change_case'		=> false
+		'path'           => '',
+		'prefix'         => '',
+		'suffix'         => '',
+		'extension'      => '',
+		'create_path'    => true,
+		'path_chmod'     => 0777,
+		'file_chmod'     => 0666,
+		'auto_rename'    => true,
+		'overwrite'      => false,
+		'randomize'      => false,
+		'normalize'      => false,
+		'change_case'    => false
 	);
 
 	/**
 	 * @var array defined callbacks
 	 */
 	protected static $callbacks = array(
-		'validate'	=> null,
-		'before'	=> null,
-		'after'		=> null
+		'validate' => null,
+		'before'   => null,
+		'after'    => null
 	);
 
 	/**
@@ -125,7 +126,7 @@ class Upload {
 		// make sure we have defaults for those not defined
 		static::$config = array_merge(static::$_defaults, \Config::get('upload', array()));
 
-		static::$config['auto_process'] and self::process();
+		static::$config['auto_process'] and static::process();
 	}
 
 	// ---------------------------------------------------------------------------
@@ -168,7 +169,7 @@ class Upload {
 	 */
 	public static function get_errors($index = null)
 	{
-		if (is_null($index) or ! isset(static::$files[$index]) or $files[$index]['error'] == 0)
+		if (is_null($index) or ! isset(static::$files[$index]) or static::$files[$index]['error'] == 0)
 		{
 			return array_filter(static::$files, function($file) { return $file['error'] != 0; } );
 		}
@@ -239,11 +240,6 @@ class Upload {
 				$keys = array_keys($value['name']);
 				foreach ($keys as $key)
 				{
-					// skip this entry if no file was uploaded
-					if ($value['error'][$key] == static::UPLOAD_ERR_NO_FILE)
-					{
-						continue;
-					}
 					// store the file data
 					$file = array('field' => $name, 'key' => $key);
 					$file['name'] = $value['name'][$key];
@@ -256,11 +252,6 @@ class Upload {
 			}
 			else
 			{
-				// skip this entry if no file was uploaded
-				if ($value['error'] == static::UPLOAD_ERR_NO_FILE)
-				{
-					continue;
-				}
 				// store the file data
 				$file = array('field' => $name, 'key' => false, 'file' => $value['tmp_name']);
 				unset($value['tmp_name']);
@@ -309,11 +300,11 @@ class Upload {
 			// check the file extension black- and whitelists
 			if ($files[$key]['error'] == UPLOAD_ERR_OK)
 			{
-				if (in_array($files[$key]['extension'], (array) static::$config['ext_blacklist']))
+				if (in_array(strtolower($files[$key]['extension']), (array) static::$config['ext_blacklist']))
 				{
 					$files[$key]['error'] = static::UPLOAD_ERR_EXT_BLACKLISTED;
 				}
-				elseif ( ! empty(static::$config['ext_whitelist']) and ! in_array($files[$key]['extension'], (array) static::$config['ext_whitelist']))
+				elseif ( ! empty(static::$config['ext_whitelist']) and ! in_array(strtolower($files[$key]['extension']), (array) static::$config['ext_whitelist']))
 				{
 					$files[$key]['error'] = static::UPLOAD_ERR_EXT_NOT_WHITELISTED;
 				}
@@ -368,12 +359,21 @@ class Upload {
 				}
 			}
 
-			// update the valid flag
-			static::$valid = (static::$valid or ($files[$key]['error'] === 0));
-
 			// and add the message text
-			static::$files[$key]['message'] = \Lang::line('upload.'.static::$files[$key]['error']);
+			static::$files[$key]['message'] = \Lang::get('upload.'.static::$files[$key]['error']);
 		}
+
+		// determine the validate status
+		$valid = false;
+		foreach(static::$files as $key => $value)
+		{
+			if ($value['error'] == 0)
+			{
+				$valid = true;
+				break;
+			}
+		}
+		static::$valid = $valid;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -434,7 +434,13 @@ class Upload {
 		// anything to save?
 		if (empty($files))
 		{
-			throw new \Fuel_Exception('No uploaded files are selected.');
+			throw new \FuelException('No uploaded files are selected.');
+		}
+
+		// supplied new name and not auto renaming?
+		if (array_key_exists('new_name', static::$config) and ! static::$config['auto_rename'] and count($files) > 1)
+		{
+			throw new \FuelException('Can\'t rename multiple files without auto renaming.');
 		}
 
 		// make sure we have a valid path
@@ -445,13 +451,16 @@ class Upload {
 			@mkdir($path, static::$config['path_chmod'], true);
 			umask($oldumask);
 		}
+
 		if ( ! is_dir($path))
 		{
-			throw new \Fuel_Exception('Can\'t move the uploaded file. Destination path specified does not exist.');
+			throw new \FuelException('Can\'t move the uploaded file. Destination path specified does not exist.');
 		}
 
-		// now that we have a path, let's save the files
+		// save the old umask
 		$oldumask = umask(0);
+
+		// now that we have a path, let's save the files
 		foreach($files as $key => $file)
 		{
 			// skip all files in error
@@ -473,6 +482,8 @@ class Upload {
 					$filename = \Inflector::friendly_title($filename, '_');
 				}
 			}
+
+			array_key_exists('new_name', static::$config) and $filename = (string) static::$config['new_name'];
 
 			// array with the final filename
 			$save_as = array(
@@ -559,6 +570,17 @@ class Upload {
 							static::$files[$key]['error'] = $result;
 						}
 					}
+
+					// recheck the saved_to path, it might have been altered
+					if ( ! is_dir(static::$files[$key]['saved_to']) and (bool) static::$config['create_path'])
+					{
+						@mkdir(static::$files[$key]['saved_to'], static::$config['path_chmod'], true);
+					}
+					if ( ! is_dir(static::$files[$key]['saved_to']))
+					{
+						static::$files[$key]['error'] = static::UPLOAD_ERR_MKDIR_FAILED;
+						continue;
+					}
 				}
 
 				// move the uploaded file
@@ -592,9 +614,17 @@ class Upload {
 				}
 			}
 		}
+
+		// update any error messages that occured while saving
+		foreach(static::$files as $key => $file)
+		{
+			static::$files[$key]['message'] = \Lang::get('upload.'.static::$files[$key]['error']);
+		}
+
+		// reset the umask
 		umask($oldumask);
 	}
 
 }
 
-/* End of file upload.php */
+

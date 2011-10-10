@@ -31,6 +31,14 @@ namespace Fuel\Core;
 class Date {
 
 	/**
+	 * Time constants (and only those that are constant, thus not MONTH/YEAR)
+	 */
+	const WEEK = 604800;
+	const DAY = 86400;
+	const HOUR = 3600;
+	const MINUTE = 60;
+
+	/**
 	 * @var int server's time() offset from gmt in seconds
 	 */
 	protected static $server_gmt_offset = 0;
@@ -61,17 +69,25 @@ class Date {
 	}
 
 	/**
+	 * This method is deprecated...use forge() instead.
+	 *
+	 * @deprecated until 1.2
+	 */
+	public static function factory($timestamp = null, $timezone = null)
+	{
+		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a forge() instead.', __METHOD__);
+		return static::forge($timestamp, $timezone);
+	}
+
+	/**
 	 * Create Date object from timestamp, timezone is optional
 	 *
 	 * @param   int     UNIX timestamp from current server
 	 * @param   string  valid PHP timezone from www.php.net/timezones
 	 * @return  Date
 	 */
-	public static function factory($timestamp = null, $timezone = null)
+	public static function forge($timestamp = null, $timezone = null)
 	{
-		$timestamp	= is_null($timestamp) ? time() + static::$server_gmt_offset : $timestamp;
-		$timezone	= is_null($timezone) ? \Fuel::$timezone : $timezone;
-
 		return new static($timestamp, $timezone);
 	}
 
@@ -82,7 +98,7 @@ class Date {
 	 */
 	public static function time($timezone = null)
 	{
-		return static::factory(null, $timezone);
+		return static::forge(null, $timezone);
 	}
 
 	/**
@@ -108,7 +124,7 @@ class Date {
 		$timestamp = mktime($time['tm_hour'], $time['tm_min'], $time['tm_sec'],
 						$time['tm_mon'] + 1, $time['tm_mday'], $time['tm_year'] + 1900);
 
-		return static::factory($timestamp + static::$server_gmt_offset);
+		return static::forge($timestamp + static::$server_gmt_offset);
 	}
 
 	/**
@@ -121,8 +137,8 @@ class Date {
 	 */
 	public static function range_to_array($start, $end, $interval = '+1 Day')
 	{
-		$start     = ( ! $start instanceof Date) ? static::factory($start) : $start;
-		$end       = ( ! $end instanceof Date) ? static::factory($end) : $end;
+		$start     = ( ! $start instanceof Date) ? static::forge($start) : $start;
+		$end       = ( ! $end instanceof Date) ? static::forge($end) : $end;
 		$interval  = (is_int($interval)) ? $interval : strtotime($interval, $start->get_timestamp()) - $start->get_timestamp();
 
 		if ($interval <= 0)
@@ -136,7 +152,7 @@ class Date {
 		while ($current->get_timestamp() <= $end->get_timestamp())
 		{
 			$range[] = $current;
-			$current = static::factory($current->get_timestamp() + $interval);
+			$current = static::forge($current->get_timestamp() + $interval);
 		}
 
 		return $range;
@@ -184,17 +200,17 @@ class Date {
 			return '';
 		}
 
-		! is_numeric($timestamp) and $timestamp = static::create_from_string($timestamp);
+		! is_numeric($timestamp) and $timestamp = static::create_from_string($timestamp)->get_timestamp();
 
 		$from_timestamp == null and $from_timestamp = time();
 
 		\Lang::load('date', true);
 
-		$difference = $from_timestamp - $timestamp;
-		$periods	= array('second', 'minute', 'hour', 'day', 'week', 'month', 'years', 'decade');
-		$lengths	= array(60, 60, 24, 7, 4.35, 12, 10);
+		$difference  = $from_timestamp - $timestamp;
+		$periods     = array('second', 'minute', 'hour', 'day', 'week', 'month', 'years', 'decade');
+		$lengths     = array(60, 60, 24, 7, 4.35, 12, 10);
 
-		for ($j = 0; $difference >= $lengths[$j]; $j++)
+		for ($j = 0; isset($lengths[$j]) and $difference >= $lengths[$j]; $j++)
 		{
 			$difference /= $lengths[$j];
 		}
@@ -206,8 +222,8 @@ class Date {
 			$periods[$j] = \Inflector::pluralize($periods[$j]);
 		}
 
-		$text = \Lang::line('date.text', array(
-			'time' => \Lang::line('date.'.$periods[$j], array('t' => $difference))
+		$text = \Lang::get('date.text', array(
+			'time' => \Lang::get('date.'.$periods[$j], array('t' => $difference))
 		));
 
 		return $text;
@@ -223,8 +239,11 @@ class Date {
 	 */
 	protected $timezone;
 
-	protected function __construct($timestamp, $timezone)
+	public function __construct($timestamp = null, $timezone = null)
 	{
+		$timestamp  = is_null($timestamp) ? time() + static::$server_gmt_offset : $timestamp;
+		$timezone   = is_null($timezone) ? \Fuel::$timezone : $timezone;
+
 		$this->timestamp = $timestamp;
 		$this->set_timezone($timezone);
 	}
@@ -303,4 +322,4 @@ class Date {
 	}
 }
 
-/* End of file date.php */
+
