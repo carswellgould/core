@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -183,7 +183,7 @@ class Error
 		}
 		catch (\FuelException $e)
 		{
-			echo $e->getMessage().Html::br();
+			echo $e->getMessage().'<br />';
 		}
 	}
 

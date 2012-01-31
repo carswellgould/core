@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -43,6 +43,21 @@ class Model_Crud extends \Model implements \Iterator, \ArrayAccess {
 	 * @var array  $_defaults  Field defaults (must set this in your Model to use)
 	 */
 	// protected static $_defaults = array();
+
+	/**
+	 * @var  bool  set true to use MySQL timestamp instead of UNIX timestamp
+	 */
+	//protected static $_mysql_timestamp = false;
+
+	/**
+	 * @var  string  fieldname of created_at field, uncomment to use.
+	 */
+	//protected static $_created_at = 'created_at';
+
+	/**
+	 * @var  string  fieldname of updated_at field, uncomment to use.
+	 */
+	//protected static $_updated_at = 'updated_at';
 
 	/**
 	 * Forges new Model_Crud objects.
@@ -404,7 +419,10 @@ class Model_Crud extends \Model implements \Iterator, \ArrayAccess {
 
 			if ($validated)
 			{
-				$vars = $this->validation()->validated() + $vars;
+				$validated = array_filter($this->validation()->validated(), function($val){
+					return ($val !== null);
+				});
+				$vars = $validated + $vars;
 			}
 			else
 			{
@@ -413,9 +431,33 @@ class Model_Crud extends \Model implements \Iterator, \ArrayAccess {
 		}
 
 		$vars = $this->prep_values($vars);
+		
+		if(isset(static::$_updated_at))
+		{
+			if(isset(static::$_mysql_timestamp) and static::$_mysql_timestamp === true)
+			{
+				$vars[static::$_updated_at] = \Date::forge()->format('mysql');
+			}
+			else
+			{
+				$vars[static::$_updated_at] = \Date::forge()->get_timestamp();
+			}
+		}
 
 		if ($this->is_new())
 		{
+			if(isset(static::$_created_at))
+			{
+				if(isset(static::$_mysql_timestamp) and static::$_mysql_timestamp === true)
+				{
+					$vars[static::$_created_at] = \Date::forge()->format('mysql');
+				}
+				else
+				{
+					$vars[static::$_created_at] = \Date::forge()->get_timestamp();
+				}
+			}
+
 			$query = \DB::insert(static::$_table_name)
 			            ->set($vars);
 
@@ -575,7 +617,7 @@ class Model_Crud extends \Model implements \Iterator, \ArrayAccess {
 	 */
 	public function offsetExists($offset)
 	{
-		return isset($this->{$offset});
+		return property_exists($this, $offset);
 	}
 
 	/**
@@ -597,7 +639,7 @@ class Model_Crud extends \Model implements \Iterator, \ArrayAccess {
 	 */
 	public function offsetGet($offset)
 	{
-		if (isset($this->{$offset}))
+		if (property_exists($this, $offset))
 		{
 			return $this->{$offset};
 		}

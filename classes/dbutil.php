@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -74,7 +74,7 @@ class DBUtil
 	}
 
 	/**
-	 * Creates a table. 
+	 * Creates a table.
 	 *
 	 * @throws	 \Database_Exception
 	 * @param    string    $table          the table name
@@ -203,11 +203,11 @@ class DBUtil
 				{
 					if (is_numeric($key))
 					{
-						$index_name .= ($columns=='' ? '' : '_').$value;
+						$index_name .= ($index_name == '' ? '' : '_').$value;
 					}
 					else
 					{
-						$index_name .= ($columns=='' ? '' : '_').str_replace(array('(', ')', ' '), '', $key);
+						$index_name .= ($index_name == '' ? '' : '_').str_replace(array('(', ')', ' '), '', $key);
 					}
 				}
 			}
@@ -314,7 +314,7 @@ class DBUtil
 			{
 				$sql .= ' AFTER '.\DB::quote_identifier($attr['AFTER']);
 			}
-			
+
 			$sql_fields[] = $sql;
 		}
 

@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -229,7 +229,7 @@ class Security
 			if ( ! method_exists($value, '__toString'))
 			{
 				throw new \RuntimeException('Object class "'.get_class($value).'" could not be converted to string or '.
-					'sanitized as ArrayAcces. Whitelist it in security.whitelisted_classes in app/config/config.php '.
+					'sanitized as ArrayAccess. Whitelist it in security.whitelisted_classes in app/config/config.php '.
 					'to allow it to be passed unchecked.');
 			}
 
