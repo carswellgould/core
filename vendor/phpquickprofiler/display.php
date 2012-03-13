@@ -174,7 +174,7 @@ CSS
 		var container = document.getElementById('pqp-container');
 		if (container.style.position == "inherit")
 		{
-			container.style.position="absolute";
+			container.style.position="";
 		}
 		else
 		{
@@ -241,7 +241,7 @@ CSS
 </script>
 JAVASCRIPT;
 
-	$return_output .='<div id="pqp-container" class="pQp" style="display:none;position:inherit;">';
+$return_output .='<div style="clear:both;"></div><div id="pqp-container" class="pQp" style="display:none;position:inherit;">';
 
 $logCount = count($output['logs']['console']);
 $fileCount = count($output['files']);
@@ -263,13 +263,14 @@ $printarray = function($items, $depth, &$class, &$count) use(&$printarray)
 		{
 			$output .= '<b>null</b>';
 		}
-		elseif( ! is_array($value))
+		elseif( ! is_array($value) AND ! is_object($value))
 		{
 			$output .= '<b>'.$value.'</b>';
 		}
 		$output .= str_repeat('&rsaquo;&nbsp;', $depth).$item.'</td></tr>';
 		if($class == '') $class = 'alt'; else $class = '';
 		is_array($value) and $output .= $printarray($value, $depth + 1, $class, $count);
+		is_object($value) and $output .= $printarray($value, $depth + 1, $class, $count);
 	}
 	return $output;
 };
@@ -588,7 +589,7 @@ $return_output .=<<<FOOTER
 	</table>
 FOOTER;
 
-	$return_output .='</div></div>';
+	$return_output .='</div></div></div>';
 
 	return $return_output;
 }
