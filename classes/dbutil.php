@@ -176,7 +176,7 @@ class DBUtil
 
 	protected static function alter_fields($type, $table, $fields, $db = null)
 	{
-		$sql = 'ALTER TABLE '.\DB::quote_identifier(\DB::table_prefix($table, $db ? $db : static::$connection), $db ? $db : static::$connection).' ';
+		$sql = 'ALTER TABLE '.\DB::quote_identifier(\DB::table_prefix($table, $db ?: static::$connection), $db ?: static::$connection).' ';
 
 		if ($type === 'DROP')
 		{
@@ -184,10 +184,13 @@ class DBUtil
 			{
 				$fields = array($fields);
 			}
-			$fields = array_map(function($field){
-				return 'DROP '.\DB::quote_identifier($field, $db ? $db : static::$connection);
-			}, $fields);
-			$sql .= implode(', ', $fields);
+
+			$drop_fields = array();
+			foreach ($fields as $field)
+			{
+				$drop_fields[] = 'DROP '.\DB::quote_identifier($field, $db ?: static::$connection);
+			}
+			$sql .= implode(', ', $drop_fields);
 		}
 		else
 		{
@@ -198,7 +201,7 @@ class DBUtil
 			$use_brackets and $sql .= ')';
 		}
 
-		return \DB::query($sql, \DB::UPDATE)->execute($db ? $db : static::$connection);
+		return \DB::query($sql, \DB::UPDATE)->execute($db ?: static::$connection);
 	}
 
 	/**
@@ -390,6 +393,45 @@ class DBUtil
 
 		return $charset;
 	}
+	
+	/**
+	 * Adds a single foreign key to a table
+	 * 
+	 * @param	string	$table			the table name
+	 * @param	array 	$foreign_key	a single foreign key
+	 * @return 	int		number of affected rows
+	 */
+	public static function add_foreign_key($table, $foreign_key) 
+	{
+		if ( ! is_array($foreign_key))
+		{
+			throw new InvalidArgumentException('Foreign key for add_foreign_key() must be specified as an array');
+		}
+		
+		$sql = 'ALTER TABLE ';
+		$sql .= \DB::quote_identifier(\DB::table_prefix($table)).' ';
+		$sql .= 'ADD ';
+		$sql .= ltrim(static::process_foreign_keys(array($foreign_key)), ',');
+		
+		return \DB::query($sql, \DB::UPDATE)->execute();
+	}
+	
+	/**
+	 * Drops a foreign key from a table
+	 * 
+	 * @param	string	$table		the table name
+	 * @param	string	$fk_name	the foreign key name
+	 * @return 	int		number of affected rows
+	 */
+	public static function drop_foreign_key($table, $fk_name)
+	{
+		$sql = 'ALTER TABLE ';
+		$sql .= \DB::quote_identifier(\DB::table_prefix($table)).' ';
+		$sql .= 'DROP FOREIGN KEY '.\DB::quote_identifier($fk_name);
+		
+		return \DB::query($sql, \DB::UPDATE)->execute();
+	}
+	
 
 	/**
 	 * Returns string of foreign keys

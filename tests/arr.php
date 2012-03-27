@@ -492,6 +492,13 @@ class Tests_Arr extends TestCase
 		$this->assertEquals(Arr::sort($data, 'info.pet.type', 'downer'), $expected);
 	}
 
+	public function test_sort_empty()
+	{
+		$expected = array();
+		$output = Arr::sort(array(), 'test', 'test');
+		$this->assertEquals($expected, $output);
+	}
+
 	/**
 	 * Tests Arr::filter_keys()
 	 *
@@ -532,12 +539,12 @@ class Tests_Arr extends TestCase
 	 * Tests Arr::to_assoc()
 	 *
 	 * @test
+	 * @expectedException BadMethodCallException
 	 */
 	public function test_to_assoc_with_odd_number_of_elements()
 	{
 		$arr = array('foo', 'bar', 'baz');
-		$expected = null;
-		$this->assertEquals($expected, Arr::to_assoc($arr));
+		Arr::to_assoc($arr);
 	}
 
 	/**

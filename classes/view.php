@@ -264,9 +264,10 @@ class View
 	 *
 	 *     $data = $this->get_data();
 	 *
-	 * @return  array
+	 * @param   string  $scope  local/glocal/all
+	 * @return  array   view data
 	 */
-	protected function get_data()
+	protected function get_data($scope = 'all')
 	{
 		$clean_it = function ($data, $rules, $auto_filter)
 		{
@@ -283,12 +284,12 @@ class View
 
 		$data = array();
 
-		if ( ! empty($this->data))
+		if ( ! empty($this->data)  and ($scope === 'all' or $scope === 'local'))
 		{
 			$data += $clean_it($this->data, $this->local_filter, $this->auto_filter);
 		}
 
-		if ( ! empty(static::$global_data))
+		if ( ! empty(static::$global_data)  and ($scope === 'all' or $scope === 'global'))
 		{
 			$data += $clean_it(static::$global_data, static::$global_filter, $this->auto_filter);
 		}
@@ -532,8 +533,8 @@ class View
 	{
 		if (class_exists('Request', false))
 		{
-			$current_request = Request::active();
-			Request::active($this->active_request);
+			$current_request = \Request::active();
+			\Request::active($this->active_request);
 		}
 
 		if ($file !== null)
@@ -551,7 +552,7 @@ class View
 
 		if (class_exists('Request', false))
 		{
-			Request::active($current_request);
+			\Request::active($current_request);
 		}
 
 		return $return;
