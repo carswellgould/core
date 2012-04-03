@@ -389,7 +389,7 @@ if($output['logs']['speedCount'] ==  0) {
 else {
 	$return_output .='<table class="pqp-side" cellspacing="0">
 		  <tr><td><var>'.$output['speedTotals']['total'].'</var><h4>Load Time</h4></td></tr>
-		  <tr><td class="alt"><var>'.$output['speedTotals']['allowed'].'</var> <h4>Max Execution Time</h4></td></tr>
+		  <tr><td class="alt"><var>'.$output['speedTotals']['allowed'].' s</var> <h4>Max Execution Time</h4></td></tr>
 		 </table>
 		<div class="main"><table cellspacing="0">';
 
@@ -481,6 +481,7 @@ if($output['fileTotals']['count'] + $output['pathTotals']['count'] ==  0) {
 }
 else {
 	$return_output .='<table class="pqp-side" cellspacing="0">
+		  	<tr><td><var>'.count($output['paths']).'</var><h4>Finder Paths</h4></td></tr>
 		  	<tr><td><var>'.$output['fileTotals']['count'].'</var><h4>Total Files</h4></td></tr>
 			<tr><td><var>'.$output['fileTotals']['size'].'</var> <h4>Total Size</h4></td></tr>
 			<tr><td class="alt"><var>'.$output['fileTotals']['largest'].'</var> <h4>Largest</h4></td></tr>

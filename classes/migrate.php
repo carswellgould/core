@@ -200,6 +200,9 @@ class Migrate
 			// found any?
 			if ( ! empty($migrations))
 			{
+				// if no version was given, only install the next migration
+				is_null($version) and $migrations = array(reset($migrations));
+
 				// install migrations found
 				return static::migrate($migrations, $name, $type, 'up');
 			}
@@ -237,6 +240,9 @@ class Migrate
 			{
 				// we're going down, so reverse the order of mygrations
 				$migrations = array_reverse($migrations, true);
+
+				// if no version was given, only revert the last migration
+				is_null($version) and $migrations = array(reset($migrations));
 
 				// revert the installed migrations
 				return static::migrate($migrations, $name, $type, 'down');
@@ -481,6 +487,7 @@ class Migrate
 		else
 		{
 			// find all modules
+			$files = array();
 			foreach (\Config::get('module_paths') as $m)
 			{
 				$files = array_merge($files, glob($m.'*/'.\Config::get('migrations.folder').'*_*.php'));
@@ -506,7 +513,7 @@ class Migrate
 		}
 		else
 		{
-			// find all modules
+			// find all packages
 			$files = glob(PKGPATH.'*/'.\Config::get('migrations.folder').'*_*.php');
 		}
 
